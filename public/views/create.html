@@ -1,0 +1,152 @@
+<!-- 添加新钱包 -->
+<style>
+	div.importing{
+		width: 350px;
+		height:45px;
+		text-align: center;
+		line-height: 45px;
+		border-radius: 22.5px;
+		background: #a1a1a1;
+		color: #fff;
+		cursor: pointer;
+		margin:0 auto;
+		margin-top:70px;
+	}
+	div.active{
+		background: #0095ff;
+	}
+	p.tittext{
+		color:#656565;
+		font-size: 13px;
+		line-height:15px;
+		margin-top:15px;
+	}
+	p.note{
+		color: #6a6a6a;
+		font-size:13px;
+		line-height:15px;
+		background: #f6f6f5;
+		border-radius: 10px;
+		margin-top: 70px;
+		margin-bottom: 15px;
+		padding:10px;
+	}
+	span.title{
+		color: #333;
+		font-weight: bold;
+	}
+	p.center{
+		color: #0095ff;
+		font-size:12px;
+		text-align: center;
+	}
+</style>
+
+<div  class="topbar-container"  ng-include="'views/includes/topbar.html'"  ng-init="titleSection='Create new wallet';  closeToHome = true; noColor = true"> </div>
+
+
+<div class="content" ng-controller="createController as create" ng-init="create.setTotalCosigners(1)" style="padding-bottom: 20px">
+
+<!-- *****  创建 观察钱包 认证 等待冷钱包认证 ***** -->
+	<div ng-include="'views/includes/askColdwalletQrcode.html'" ng-if="index.askColdwalletQrcode && totalCosigners != 1 && !!create.qrCodeColdwallet1"></div>
+<!-- *****  创建 观察钱包 认证 等待冷钱包认证 ***** 结束 -->
+
+	<!--添加状态-->
+	<div class="onGoingProcess" ng-show="create.loading">
+		<div class="onGoingProcess-content">
+			<div class="spinner">
+				<div class="rect1"></div>
+				<div class="rect2"></div>
+				<div class="rect3"></div>
+				<div class="rect4"></div>
+				<div class="rect5"></div>
+			</div>
+			<span translate>Creating Wallet...</span>
+		</div>
+	</div>
+	<!--添加状态 结束-->
+
+	<!--选择钱包类型-->
+	<div class="create-tab small-only-text-center" ng-hide="create.hideTabs">
+		<div class="row">
+			<!--创建 普通钱包-->
+			<div class="tab-container small-6 medium-3 large-2" ng-class="{'selected': totalCosigners == 1}">
+				<a href ng-click="create.setTotalCosigners(1)" translate>Plain Wallet</a>
+			</div>
+			<!--创建 观察钱包-->
+			<div class="tab-container small-6 medium-3 large-2" ng-class="{'selected': totalCosigners != 1}">
+				<!--<a href ng-click="create.setMultisig()" translate>Multidevice Wallet</a>-->
+				<a href ng-click="create.setMultisig()" translate>Observe Wallet</a>
+			</div>
+		</div>
+	</div>
+	<!--选择钱包类型 结束-->
+
+	<form name="setupForm" ng-submit="create.create(setupForm)" novalidate>
+		<div class="row">
+			<div class="large-12 columns">
+				<!--警告-->
+ 				<div class="box-notification" ng-show="create.error">
+					<span class="text-warning size-14">{{create.error|translate}}</span>
+        		</div>
+
+				<!--钱包名称-->
+				<!--<div ng-hide="create.hideWalletName" class="m15t">-->
+				<div ng-show="totalCosigners == 1 && !create.hideWalletName" class="m15t">
+					<label>
+						<span class="size-12 color333" translate>Wallet name</span>
+						<div class="input m5t h45 size-18">
+				  			<input
+								maxlength="20"
+								style="height: 45px;font-size: 14px;"
+								type="text"
+								placeholder="{{( (totalCosigners > 1) ? ('Laptop + phone + tablet') : 'New wallet')|translate}}"
+								name="walletName"
+								ng-model="walletName" ng-required="true"
+								ng-focus="create.formFocus('wallet-name')"
+								ng-blur="create.formFocus(false)">
+						</div>
+          			</label>
+				</div>
+
+				<!--观察者 钱包-->
+				<div class="row m10t" ng-show="totalCosigners != 1">
+					<!--观察钱包 note-->
+					<div class="large-6 medium-6 columns m10t">
+						<p class="tittext">
+							<span translate>Watching Only Wallet needs to import verification QR code from the offline wallet in order to check your daily balance and transactions. It's suggested to use offline wallet to manage large amount of crypto-currencies in order to avoid theft or leaks.</span>
+							(<span translate style="color: #f00;">Note: It is not recommended to create watching wallet on your PC or laptop.</span>)
+						</p>
+					</div>
+
+					<div>
+						<h4>
+							<span class="title" translate>Offline wallet verification QR Code</span>
+							<qr-scanner-cold on-scan="create.handleQrcode(data)" before-scan="create.BeforeScan()"></qr-scanner-cold>
+						</h4>
+
+						<textarea name="qrcode" id="qrcode" cols="30" rows="5" ng-model="create.qrCodeColdwallet1" placeholder="扫码或输入冷钱包认证码"></textarea>
+
+						<p style="color: #f00;" ng-if="create.isErr == 1 && create.isError() == 0" translate>Invalid verification Code</p>
+						<p style="color: #f00;" ng-if="create.isExists == 1 && create.isError() == 0" translate>The wallet already exists</p>
+
+						<!--<div translate class="importing" ng-class="{active:create.isErr == 0}" ng-click="index.askColdwalletQrcode = true">Start importing</div>-->
+						<div translate class="importing" ng-class="{active:create.isError() == 0}" ng-click="create.askColdwalletQrcode()">Start importing</div>
+
+						<p class="note" translate> Note: Watching Only Wallet needs a offline wallet to help siging. You can use a retired smartphone and enable its aeroplane mode as a offline wallet for the offline signing purpose. </p>
+						<p class="center" translate  ng-click="index.showhow = 1">How offline signing works?</p>
+					</div>
+				</div>
+				<!--观察者钱包 结束-->
+
+				<!--单签名钱包按钮-->
+				<button type="submit" class="button round black expand m15t" ng-show="totalCosigners == 1" ng-disabled="setupForm.$invalid || create.loading">
+				  <span translate>Create new wallet</span>
+				</button>
+
+			</div> <!-- large-12 columns -->
+    	</div> <!-- row -->
+  	</form>
+</div>
+
+<div class="extra-margin-bottom"></div>
